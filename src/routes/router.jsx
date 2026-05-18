@@ -27,6 +27,7 @@ import CreatorOverview from '../pages/Dashboard/Creator/CreatorOverview';
 import AddContest from '../pages/Dashboard/Creator/AddContest';
 import MyContests from '../pages/Dashboard/Creator/MyContests';
 import ContestSubmissions from '../pages/Dashboard/Creator/ContestSubmissions';
+import EditContest from '../pages/Dashboard/Creator/EditContest';
 
 // Admin dashboard
 import AdminOverview from '../pages/Dashboard/Admin/AdminOverview';
@@ -71,6 +72,7 @@ const router = createBrowserRouter([
       { path: 'add-contest', element: <AddContest /> },
       { path: 'my-contests', element: <MyContests /> },
       { path: 'submissions/:contestId', element: <ContestSubmissions /> },
+      { path: 'edit-contest/:id', element: <EditContest /> },
     ],
   },
   {

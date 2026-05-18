@@ -80,6 +80,11 @@ const MyContests = () => {
                       <FaEye />
                     </Link>
                     {c.status !== 'approved' && (
+                      <Link to={`/dashboard/creator/edit-contest/${c._id}`} className="btn btn-xs btn-info btn-outline">
+                        <FaEdit />
+                      </Link>
+                    )}
+                    {c.status !== 'approved' && (
                       <button onClick={() => handleDelete(c._id, c.name)} className="btn btn-xs btn-error btn-outline">
                         <FaTrash />
                       </button>
