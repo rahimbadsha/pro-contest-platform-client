@@ -5,6 +5,7 @@ import { useAuth } from '../../../context/AuthContext';
 import Spinner from '../../../components/Spinner';
 import Swal from 'sweetalert2';
 import { FaChartPie } from 'react-icons/fa';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const UserProfile = () => {
   const { refreshDbUser } = useAuth();
@@ -32,7 +33,32 @@ const UserProfile = () => {
   if (isLoading) return <Spinner />;
 
   const { user, stats } = data || {};
+  const participated = stats?.participated || 0;
+  const wins = stats?.wins || 0;
+  const losses = participated - wins;
   const winPct = parseFloat(stats?.winPercentage || 0);
+
+  const pieData = participated > 0
+    ? [
+        { name: 'Wins', value: wins },
+        { name: 'Losses', value: losses > 0 ? losses : 0 },
+      ]
+    : [{ name: 'No contests yet', value: 1 }];
+
+  const COLORS = participated > 0 ? ['#4ade80', '#f87171'] : ['#d1d5db'];
+
+  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    if (percent < 0.05) return null;
+    const RADIAN = Math.PI / 180;
+    const r = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + r * Math.cos(-midAngle * RADIAN);
+    const y = cy + r * Math.sin(-midAngle * RADIAN);
+    return (
+      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={13} fontWeight={700}>
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   return (
     <div className="max-w-2xl">
@@ -53,20 +79,35 @@ const UserProfile = () => {
             </div>
           </div>
 
-          {/* Win percentage chart (simple progress bar as chart) */}
           <div className="bg-base-200 rounded-box p-4">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-3">
               <FaChartPie className="text-primary" />
               <span className="font-semibold">Performance</span>
             </div>
-            <div className="grid grid-cols-3 gap-3 text-center mb-3">
-              <div><p className="text-2xl font-bold text-primary">{stats?.participated || 0}</p><p className="text-xs text-base-content/60">Participated</p></div>
-              <div><p className="text-2xl font-bold text-warning">{stats?.wins || 0}</p><p className="text-xs text-base-content/60">Wins</p></div>
-              <div><p className="text-2xl font-bold text-success">{winPct}%</p><p className="text-xs text-base-content/60">Win Rate</p></div>
+            <div className="grid grid-cols-3 gap-3 text-center mb-4">
+              <div><p className="text-2xl font-bold text-primary">{participated}</p><p className="text-xs text-base-content/60">Participated</p></div>
+              <div><p className="text-2xl font-bold text-success">{wins}</p><p className="text-xs text-base-content/60">Wins</p></div>
+              <div><p className="text-2xl font-bold text-warning">{winPct}%</p><p className="text-xs text-base-content/60">Win Rate</p></div>
             </div>
-            <div className="w-full bg-base-300 rounded-full h-3">
-              <div className="bg-gradient-to-r from-primary to-success h-3 rounded-full transition-all duration-700" style={{ width: `${Math.min(winPct, 100)}%` }} />
-            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={85}
+                  dataKey="value"
+                  labelLine={false}
+                  label={participated > 0 ? renderCustomLabel : false}
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value, name) => [value, name]} />
+                {participated > 0 && <Legend />}
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
