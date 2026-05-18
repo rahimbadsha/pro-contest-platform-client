@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosPublic, axiosSecure } from '../../hooks/useAxios';
 import { useAuth } from '../../context/AuthContext';
 import Spinner from '../../components/Spinner';
@@ -33,13 +33,37 @@ const ContestDetails = () => {
   const { slug } = useParams();
   const { user, dbUser } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [submissionLink, setSubmissionLink] = useState('');
+  const [notes, setNotes] = useState('');
 
   const { data: contest, isLoading, error } = useQuery({
     queryKey: ['contest', slug],
     queryFn: () => axiosPublic.get(`/contests/${slug}`).then((r) => r.data),
   });
 
+  const { data: mySubmissionData } = useQuery({
+    queryKey: ['mySubmission', contest?._id],
+    queryFn: () => axiosSecure.get(`/user/submission/${contest._id}`).then((r) => r.data),
+    enabled: !!user && !!contest?._id,
+  });
+
+  const mySubmission = mySubmissionData?.submission;
+  const hasPaid = mySubmission?.paymentStatus === 'paid';
+  const hasSubmitted = hasPaid && !!mySubmission?.submissionLink;
+
   const timeLeft = useCountdown(contest?.deadline);
+
+  const submitMutation = useMutation({
+    mutationFn: () => axiosSecure.post('/user/submit', { contestId: contest._id, submissionLink, notes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mySubmission', contest._id] });
+      setShowSubmitModal(false);
+      Swal.fire({ icon: 'success', title: 'Entry submitted!', text: 'Your submission has been received.', timer: 2000, showConfirmButton: false });
+    },
+    onError: (err) => Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.message || 'Submission failed' }),
+  });
 
   const handleRegister = async () => {
     if (!user) {
@@ -153,14 +177,70 @@ const ContestDetails = () => {
             </div>
           )}
 
-          {/* Register button */}
-          {!timeLeft.expired && !contest.winnerDeclared && (
-            <button onClick={handleRegister} className="btn btn-primary btn-lg w-full">
-              Register for ${contest.price}
-            </button>
+          {/* Action buttons */}
+          {!contest.winnerDeclared && (
+            <div className="flex flex-col gap-3">
+              {hasPaid ? (
+                hasSubmitted ? (
+                  <div className="alert alert-success">
+                    <FaTrophy /> Your entry has been submitted! Good luck.
+                  </div>
+                ) : (
+                  <button onClick={() => setShowSubmitModal(true)} className="btn btn-success btn-lg w-full">
+                    Submit Your Entry
+                  </button>
+                )
+              ) : (
+                !timeLeft.expired && (
+                  <button onClick={handleRegister} className="btn btn-primary btn-lg w-full">
+                    Register for ${contest.price}
+                  </button>
+                )
+              )}
+            </div>
           )}
         </div>
       </div>
+
+      {/* Submit Task Modal */}
+      {showSubmitModal && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">Submit Your Entry</h3>
+            <div className="form-control mb-4">
+              <label className="label"><span className="label-text">Submission Link *</span></label>
+              <input
+                type="url"
+                placeholder="https://your-submission-link.com"
+                className="input input-bordered"
+                value={submissionLink}
+                onChange={(e) => setSubmissionLink(e.target.value)}
+              />
+            </div>
+            <div className="form-control mb-6">
+              <label className="label"><span className="label-text">Notes (optional)</span></label>
+              <textarea
+                rows={3}
+                placeholder="Any additional notes about your submission..."
+                className="textarea textarea-bordered"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+            <div className="modal-action">
+              <button
+                className="btn btn-primary"
+                disabled={!submissionLink || submitMutation.isPending}
+                onClick={() => submitMutation.mutate()}
+              >
+                {submitMutation.isPending ? <span className="loading loading-spinner" /> : 'Submit Entry'}
+              </button>
+              <button className="btn btn-ghost" onClick={() => setShowSubmitModal(false)}>Cancel</button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setShowSubmitModal(false)} />
+        </div>
+      )}
     </div>
   );
 };
