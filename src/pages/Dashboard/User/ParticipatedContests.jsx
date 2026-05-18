@@ -16,6 +16,10 @@ const ParticipatedContests = () => {
 
   if (isLoading) return <Spinner />;
 
+  const sorted = data?.submissions
+    ? [...data.submissions].sort((a, b) => new Date(a.contest?.deadline) - new Date(b.contest?.deadline))
+    : [];
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Participated Contests</h2>
@@ -27,18 +31,24 @@ const ParticipatedContests = () => {
               <th>Contest</th>
               <th>Type</th>
               <th>Deadline</th>
+              <th>Payment</th>
               <th>Status</th>
               <th>Winner</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {data?.submissions?.map((sub, i) => (
+            {sorted.map((sub, i) => (
               <tr key={sub._id}>
                 <td>{(page - 1) * PAGE_SIZE + i + 1}</td>
                 <td className="font-medium">{sub.contest?.name}</td>
                 <td><span className="badge badge-sm capitalize">{sub.contest?.type?.replace(/-/g, ' ')}</span></td>
                 <td>{new Date(sub.contest?.deadline).toLocaleDateString()}</td>
+                <td>
+                  <span className={`badge badge-sm ${sub.paymentStatus === 'paid' ? 'badge-success' : 'badge-warning'}`}>
+                    {sub.paymentStatus}
+                  </span>
+                </td>
                 <td>
                   <span className={`badge badge-sm ${sub.contest?.status === 'ended' ? 'badge-error' : 'badge-success'}`}>
                     {sub.contest?.status}
@@ -50,13 +60,18 @@ const ParticipatedContests = () => {
                   ) : '-'}
                 </td>
                 <td>
-                  <Link to={`/contests/${sub.contest?.slug}`} className="btn btn-xs btn-ghost">View</Link>
+                  <div className="flex gap-1">
+                    <Link to={`/contests/${sub.contest?.slug}`} className="btn btn-xs btn-ghost">View</Link>
+                    {sub.paymentStatus === 'paid' && !sub.submissionLink && !sub.contest?.winnerDeclared && (
+                      <Link to={`/contests/${sub.contest?.slug}`} className="btn btn-xs btn-primary">Submit</Link>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {!data?.submissions?.length && (
+        {!sorted.length && (
           <p className="text-center py-10 text-base-content/50">No participated contests yet</p>
         )}
       </div>
