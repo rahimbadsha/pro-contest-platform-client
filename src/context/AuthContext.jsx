@@ -28,13 +28,26 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    // Get JWT from our server
+    // Verify credentials against our backend first (source of truth)
     const { data } = await axiosPublic.post('/auth/login', { email, password });
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('user', JSON.stringify(data.user));
     setDbUser(data.user);
-    return cred;
+
+    // Sync with Firebase so PrivateRoute works
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (fbErr) {
+      if (fbErr.code === 'auth/user-not-found' || fbErr.code === 'auth/invalid-credential' || fbErr.code === 'auth/invalid-login-credentials') {
+        // User exists in DB but not Firebase (seeded accounts) — create Firebase user silently
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+        } catch {
+          // Firebase creation failed (e.g. email in use with different provider) — ignore
+        }
+      }
+    }
+    return data;
   };
 
   const loginWithGoogle = async () => {

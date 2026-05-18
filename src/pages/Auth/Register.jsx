@@ -4,6 +4,16 @@ import { useAuth } from '../../context/AuthContext';
 import Swal from 'sweetalert2';
 import { FaGoogle, FaTrophy } from 'react-icons/fa';
 
+const friendlyError = (err) => {
+  const msg = err?.response?.data?.message || err?.message || '';
+  if (msg.includes('email-already-in-use') || msg.includes('Email already in use')) return 'This email is already registered. Try logging in instead.';
+  if (msg.includes('weak-password')) return 'Password is too weak. Use at least 6 characters.';
+  if (msg.includes('invalid-email')) return 'Invalid email address.';
+  if (msg.includes('network') || msg.includes('Network')) return 'Network error. Check your internet connection.';
+  if (msg.includes('unauthorized-domain')) return 'Registration not allowed from this domain. Contact support.';
+  return msg || 'Registration failed. Please try again.';
+};
+
 const Register = () => {
   const { register: registerUser, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
@@ -16,7 +26,7 @@ const Register = () => {
       Swal.fire({ icon: 'success', title: 'Account created!', timer: 1500, showConfirmButton: false });
       navigate('/login');
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Registration failed', text: err.response?.data?.message || err.message });
+      Swal.fire({ icon: 'error', title: 'Registration failed', text: friendlyError(err) });
     }
   };
 
@@ -26,7 +36,7 @@ const Register = () => {
       Swal.fire({ icon: 'success', title: 'Welcome!', timer: 1500, showConfirmButton: false });
       navigate('/');
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Google login failed', text: err.message });
+      Swal.fire({ icon: 'error', title: 'Google login failed', text: friendlyError(err) });
     }
   };
 

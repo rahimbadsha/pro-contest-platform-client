@@ -4,6 +4,17 @@ import { useAuth } from '../../context/AuthContext';
 import Swal from 'sweetalert2';
 import { FaGoogle, FaTrophy } from 'react-icons/fa';
 
+const friendlyError = (err) => {
+  const msg = err?.response?.data?.message || err?.message || '';
+  if (msg.includes('Invalid credentials') || msg.includes('invalid-credential') || msg.includes('invalid-login')) return 'Wrong email or password.';
+  if (msg.includes('too-many-requests')) return 'Too many attempts. Please wait a few minutes and try again.';
+  if (msg.includes('network') || msg.includes('Network')) return 'Network error. Check your internet connection.';
+  if (msg.includes('user-not-found')) return 'No account found with this email.';
+  if (msg.includes('wrong-password')) return 'Incorrect password.';
+  if (msg.includes('unauthorized-domain')) return 'Login not allowed from this domain. Contact support.';
+  return msg || 'Something went wrong. Please try again.';
+};
+
 const Login = () => {
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
@@ -18,7 +29,7 @@ const Login = () => {
       Swal.fire({ icon: 'success', title: 'Welcome back!', timer: 1500, showConfirmButton: false });
       navigate(from, { replace: true });
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Login failed', text: err.response?.data?.message || err.message });
+      Swal.fire({ icon: 'error', title: 'Login failed', text: friendlyError(err) });
     }
   };
 
@@ -28,7 +39,7 @@ const Login = () => {
       Swal.fire({ icon: 'success', title: 'Welcome!', timer: 1500, showConfirmButton: false });
       navigate(from, { replace: true });
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Google login failed', text: err.message });
+      Swal.fire({ icon: 'error', title: 'Google login failed', text: friendlyError(err) });
     }
   };
 
