@@ -38,13 +38,19 @@ const Banner = () => {
         </form>
 
         <div className="flex gap-4 flex-wrap justify-center mt-6">
-          {['Image Design', 'Article Writing', 'Marketing', 'Gaming', 'Book Review'].map((tag) => (
+          {[
+            { label: 'Image Design', value: 'image-design' },
+            { label: 'Article Writing', value: 'article-writing' },
+            { label: 'Marketing', value: 'marketing-strategy' },
+            { label: 'Gaming', value: 'gaming-review' },
+            { label: 'Book Review', value: 'book-review' },
+          ].map(({ label, value }) => (
             <button
-              key={tag}
-              onClick={() => navigate(`/contests?type=${tag.toLowerCase().replace(' ', '-')}`)}
+              key={value}
+              onClick={() => navigate(`/contests?type=${value}`)}
               className="badge badge-outline badge-primary cursor-pointer hover:badge-primary transition-colors"
             >
-              {tag}
+              {label}
             </button>
           ))}
         </div>

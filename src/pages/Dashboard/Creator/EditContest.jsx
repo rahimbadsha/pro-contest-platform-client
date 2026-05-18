@@ -15,10 +15,11 @@ const EditContest = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const { data, isLoading } = useQuery({
+  const { data: contestData, isLoading } = useQuery({
     queryKey: ['creatorContest', id],
-    queryFn: () => axiosSecure.get(`/creator/my-contests`).then((r) => r.data.contests.find((c) => c._id === id)),
+    queryFn: () => axiosSecure.get(`/creator/contests/${id}`).then((r) => r.data.contest),
   });
+  const data = contestData;
 
   const { register, handleSubmit, reset, control, formState: { errors, isSubmitting } } = useForm();
 
@@ -49,12 +50,13 @@ const EditContest = () => {
   });
 
   const onSubmit = (data) => {
-    const { deadline, ...rest } = data;
+    const { deadline, tags, ...rest } = data;
     mutation.mutate({
       ...rest,
       price: parseFloat(rest.price),
       prize: parseFloat(rest.prize),
       deadline: deadline ? deadline.toISOString() : '',
+      tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
     });
   };
 

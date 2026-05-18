@@ -8,7 +8,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase/config';
-import { axiosPublic } from '../hooks/useAxios';
+import { axiosPublic, axiosSecure } from '../hooks/useAxios';
 
 const AuthContext = createContext(null);
 
@@ -63,9 +63,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshDbUser = async () => {
     try {
-      const { data } = await axiosPublic.get('/user/profile', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
-      });
+      const { data } = await axiosSecure.get('/user/profile');
       localStorage.setItem('user', JSON.stringify(data.user));
       setDbUser(data.user);
     } catch {}

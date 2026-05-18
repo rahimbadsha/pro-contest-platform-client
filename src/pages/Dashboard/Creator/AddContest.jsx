@@ -27,12 +27,13 @@ const AddContest = () => {
   });
 
   const onSubmit = (data) => {
-    const { deadline, ...rest } = data;
+    const { deadline, tags, ...rest } = data;
     mutation.mutate({
       ...rest,
       price: parseFloat(rest.price),
       prize: parseFloat(rest.prize),
       deadline: deadline ? deadline.toISOString() : '',
+      tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
     });
   };
 
