@@ -41,33 +41,15 @@ export const AuthProvider = ({ children }) => {
     const cred = await signInWithPopup(auth, googleProvider);
     const { user: fbUser } = cred;
 
-    const saveSession = (data) => {
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setDbUser(data.user);
-    };
-
-    try {
-      // Try login with uid as password (existing Google users)
-      const { data } = await axiosPublic.post('/auth/login', {
-        email: fbUser.email,
-        password: fbUser.uid,
-      });
-      saveSession(data);
-    } catch {
-      // New Google user — register then login
-      await axiosPublic.post('/auth/register', {
-        name: fbUser.displayName || fbUser.email,
-        email: fbUser.email,
-        password: fbUser.uid,
-        photoUrl: fbUser.photoURL || '',
-      }).catch(() => {}); // ignore if already exists
-      const { data } = await axiosPublic.post('/auth/login', {
-        email: fbUser.email,
-        password: fbUser.uid,
-      });
-      saveSession(data);
-    }
+    const { data } = await axiosPublic.post('/auth/google', {
+      email: fbUser.email,
+      name: fbUser.displayName || fbUser.email,
+      photoUrl: fbUser.photoURL || '',
+      uid: fbUser.uid,
+    });
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setDbUser(data.user);
     return cred;
   };
 
