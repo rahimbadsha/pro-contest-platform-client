@@ -4,7 +4,7 @@ A full-stack contest management platform where users can discover, register, and
 
 ## Live Site
 
-[Live Demo](https://pro-contest-platform.web.app) <!-- Update with deployed URL -->
+[Live Demo](https://procontestplatform.netlify.app)
 
 ## Features
 
