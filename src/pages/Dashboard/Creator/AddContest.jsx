@@ -1,8 +1,11 @@
-import { useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosSecure } from '../../../hooks/useAxios';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const TYPES = ['image-design', 'article-writing', 'marketing-strategy', 'gaming-review', 'book-review', 'business-idea', 'other'];
 
@@ -10,7 +13,7 @@ const AddContest = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
+  const { register, handleSubmit, reset, control, formState: { errors, isSubmitting } } = useForm();
 
   const mutation = useMutation({
     mutationFn: (data) => axiosSecure.post('/creator/contests', data),
@@ -24,7 +27,13 @@ const AddContest = () => {
   });
 
   const onSubmit = (data) => {
-    mutation.mutate({ ...data, price: parseFloat(data.price), prize: parseFloat(data.prize) });
+    const { deadline, ...rest } = data;
+    mutation.mutate({
+      ...rest,
+      price: parseFloat(rest.price),
+      prize: parseFloat(rest.prize),
+      deadline: deadline ? deadline.toISOString() : '',
+    });
   };
 
   return (
@@ -77,9 +86,21 @@ const AddContest = () => {
               </div>
               <div className="form-control">
                 <label className="label"><span className="label-text">Deadline *</span></label>
-                <input type="date" className={`input input-bordered ${errors.deadline ? 'input-error' : ''}`}
-                  min={new Date().toISOString().split('T')[0]}
-                  {...register('deadline', { required: 'Deadline required' })} />
+                <Controller
+                  control={control}
+                  name="deadline"
+                  rules={{ required: 'Deadline required' }}
+                  render={({ field }) => (
+                    <DatePicker
+                      selected={field.value}
+                      onChange={field.onChange}
+                      minDate={new Date()}
+                      dateFormat="yyyy-MM-dd"
+                      className={`input input-bordered w-full ${errors.deadline ? 'input-error' : ''}`}
+                      placeholderText="Select deadline"
+                    />
+                  )}
+                />
                 {errors.deadline && <span className="text-error text-xs">{errors.deadline.message}</span>}
               </div>
             </div>
